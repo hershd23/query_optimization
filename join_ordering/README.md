@@ -1,4 +1,9 @@
 # JOIN ORDERING
+## Running the code
+```
+g++ -fdiagnostics-color -std=c++11 -std=c++14 -std=c++17 -O3 -Wall -Werror -Wextra join_order_compare.cpp -o join_order_comp.out
+./join_order_comp.out
+```
 ## Results
 ### IKKBZ Optimizer:
 
