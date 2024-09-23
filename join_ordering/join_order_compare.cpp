@@ -9,6 +9,8 @@
 #include <chrono>
 #include <bitset>
 #include <cstring>
+#include <set>
+#include <queue>
 
 const int MAX_RELATIONS = 16;
 
@@ -379,17 +381,33 @@ private:
  *
  * @return A vector of random records.
  */
-std::vector<Record> generateRandomRecords(int size, const std::string& prefix) {
+std::vector<Record> generateRecordsWithJoinMatch(int size, const std::string& prefix, 
+                                                 const std::vector<int>& sharedIds, double matchRatio) {
     std::vector<Record> records;
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(1, size * 10);
+    std::uniform_int_distribution<> dis(0, sharedIds.size() - 1);
+    std::uniform_real_distribution<> match_dis(0.0, 1.0);
+
+    int numSharedIds = static_cast<int>(size * matchRatio);
 
     for (int i = 0; i < size; ++i) {
-        records.push_back({dis(gen), prefix + std::to_string(i)});
+        int id;
+        if (i < numSharedIds) {
+            // Use a shared ID
+            id = sharedIds[i % sharedIds.size()];
+        } else if (match_dis(gen) < matchRatio) {
+            // Randomly choose to use a shared ID
+            id = sharedIds[dis(gen)];
+        } else {
+            // Generate a new unique ID
+            id = size * 10 + i;  // Ensure uniqueness
+        }
+        records.push_back({id, prefix + std::to_string(i)});
     }
     return records;
 }
+
 
 /**
  * Performs an inner join on two vectors of records based on matching IDs.
@@ -400,14 +418,24 @@ std::vector<Record> generateRandomRecords(int size, const std::string& prefix) {
  * @return A vector of joined records, where each record contains the matching ID and concatenated data.
  */
 std::vector<Record> performJoin(const std::vector<Record>& left, const std::vector<Record>& right) {
+    std::unordered_map<int, std::vector<Record>> hash_table;
+    
+    // Build phase
+    for (const auto& r : left) {
+        hash_table[r.id].push_back(r);
+    }
+    
+    // Probe phase
     std::vector<Record> result;
-    for (const auto& l : left) {
-        for (const auto& r : right) {
-            if (l.id == r.id) {
-                result.push_back({l.id, l.data + "-" + r.data});
+    for (const auto& r : right) {
+        auto it = hash_table.find(r.id);
+        if (it != hash_table.end()) {
+            for (const auto& l : it->second) {
+                result.push_back({r.id, l.data + "-" + r.data});
             }
         }
     }
+    
     return result;
 }
 
@@ -486,13 +514,19 @@ void runAndMeasure(const JoinGraph& graph, const std::string& strategy,
 int main() {
     JoinGraph graph;
 
-    // Create a more complex join graph
-    graph.addRelation({"A", 10000, generateRandomRecords(10000, "A")});
-    graph.addRelation({"B", 15000, generateRandomRecords(15000, "B")});
-    graph.addRelation({"C", 20000, generateRandomRecords(20000, "C")});
-    graph.addRelation({"D", 5000, generateRandomRecords(5000, "D")});
-    graph.addRelation({"E", 25000, generateRandomRecords(25000, "E")});
-    graph.addRelation({"F", 8000, generateRandomRecords(8000, "F")});
+    // Create a vector of shared IDs to ensure join matches
+    std::vector<int> sharedIds;
+    for (int i = 0; i < 1000; ++i) {  // Create 1000 shared IDs
+        sharedIds.push_back(i + 1);
+    }
+
+    // Create a more complex join graph with guaranteed join matches
+    graph.addRelation({"A", 10000, generateRecordsWithJoinMatch(10000, "A", sharedIds, 0.1)});
+    graph.addRelation({"B", 15000, generateRecordsWithJoinMatch(15000, "B", sharedIds, 0.1)});
+    graph.addRelation({"C", 20000, generateRecordsWithJoinMatch(20000, "C", sharedIds, 0.1)});
+    graph.addRelation({"D", 5000, generateRecordsWithJoinMatch(5000, "D", sharedIds, 0.1)});
+    graph.addRelation({"E", 25000, generateRecordsWithJoinMatch(25000, "E", sharedIds, 0.1)});
+    graph.addRelation({"F", 8000, generateRecordsWithJoinMatch(8000, "F", sharedIds, 0.1)});
 
     graph.addJoinCondition({"A", "B", 0.1});
     graph.addJoinCondition({"B", "C", 0.05});
