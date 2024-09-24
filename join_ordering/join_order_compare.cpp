@@ -497,8 +497,12 @@ void runAndMeasure(const JoinGraph& graph, const std::string& strategy,
     std::cout << "Estimated Join Cost: " << estimatedCost << std::endl;
 
     start = std::chrono::high_resolution_clock::now();
-    std::vector<Record> result = graph.relations[0].records;
+    //std::vector<Record> result = graph.relations[0].records;
+    auto it = std::find_if(graph.relations.begin(), graph.relations.end(),
+                               [&](const Relation& r) { return r.name == order[0]; });
+    std::vector<Record> result = it->records;                         
     for (size_t i = 1; i < order.size(); ++i) {
+        //std::cout<<"Current Size"<<result.size()<<std::endl;
         auto it = std::find_if(graph.relations.begin(), graph.relations.end(),
                                [&](const Relation& r) { return r.name == order[i]; });
         result = performJoin(result, it->records);
@@ -535,9 +539,6 @@ int main() {
     graph.addJoinCondition({"E", "F", 0.1});
 
     try {
-        std::cout << "IKKBZ Optimizer:" << std::endl;
-        runAndMeasure(graph, "IKKBZ", JoinOptimizer::ikkbzOptimize);
-
         std::cout << "Random Optimizer:" << std::endl;
         runAndMeasure(graph, "Random", JoinOptimizer::randomOptimize);
 
@@ -546,6 +547,9 @@ int main() {
 
         std::cout << "Dynamic Programming Optimizer:" << std::endl;
         runAndMeasure(graph, "DP", JoinOptimizer::dpOptimize);
+
+        std::cout << "IKKBZ Optimizer:" << std::endl;
+        runAndMeasure(graph, "IKKBZ", JoinOptimizer::ikkbzOptimize);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
