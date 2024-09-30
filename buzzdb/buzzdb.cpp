@@ -624,6 +624,26 @@ public:
     }
 };
 
+
+class CostModel {
+public:
+    double estimateScanCost(size_t numPages) {
+        // Assume each page access costs 1 unit
+        return static_cast<double>(numPages);
+    }
+
+    double estimateSelectCost(size_t numTuples, double selectivity) {
+        // Cost of scanning all tuples plus cost of applying predicate
+        return static_cast<double>(numTuples) * (1.0 + selectivity);
+    }
+
+    double estimateHashAggregateCost(size_t numTuples, size_t numGroups) {
+        // Cost of hashing all tuples plus cost of aggregation
+        return static_cast<double>(numTuples) * 2.0 + static_cast<double>(numGroups);
+    }
+};
+
+
 class Operator {
     public:
     virtual ~Operator() = default;
@@ -642,6 +662,9 @@ class Operator {
     /// `next()` returns true, the Fields will contain the values for the
     /// next tuple. Each `Field` pointer in the vector stands for one attribute of the tuple.
     virtual std::vector<std::unique_ptr<Field>> getOutput() = 0;
+
+    // New method for cost estimation
+    virtual double estimateCost(CostModel& costModel) = 0;
 };
 
 class UnaryOperator : public Operator {
@@ -703,6 +726,10 @@ public:
             return std::move(currentTuple->fields);
         }
         return {}; // Return an empty vector if no tuple is available
+    }
+
+    double estimateCost(CostModel& costModel) override {
+        return costModel.estimateScanCost(bufferManager.getNumPages());
     }
 
 private:
@@ -933,6 +960,11 @@ public:
             return {}; // Return an empty vector if no matching tuple is found
         }
     }
+
+    double estimateCost(CostModel& costModel) override {
+        // Assume 10% selectivity for now. In a real system, this would be based on statistics.
+        return costModel.estimateSelectCost(input->estimateCost(costModel), 0.1);
+    }
 };
 
 enum class AggrFuncType { COUNT, MAX, MIN, SUM };
@@ -1073,6 +1105,12 @@ public:
         return outputCopy;
     }
 
+     double estimateCost(CostModel& costModel) override {
+        // Assume 10% of tuples form distinct groups. Again, this should be based on statistics in a real system.
+        size_t estimatedNumTuples = static_cast<size_t>(input->estimateCost(costModel));
+        return costModel.estimateHashAggregateCost(estimatedNumTuples, estimatedNumTuples / 10);
+    }
+
 
 private:
 
@@ -1129,6 +1167,65 @@ private:
             "Invalid operation or unsupported Field type.");
     }
 
+};
+
+class JoinOrderOptimizer {
+public:
+    std::vector<size_t> optimizeJoinOrder(const std::vector<std::pair<size_t, size_t>>& joins, 
+                                          const std::vector<size_t>& tableSizes) {
+        std::vector<size_t> joinOrder;
+        std::vector<bool> joined(tableSizes.size(), false);
+
+        // Start with the smallest table
+        size_t smallestTable = std::min_element(tableSizes.begin(), tableSizes.end()) - tableSizes.begin();
+        joinOrder.push_back(smallestTable);
+        joined[smallestTable] = true;
+
+        while (joinOrder.size() < tableSizes.size()) {
+            double bestCost = std::numeric_limits<double>::max();
+            size_t bestTable = -1;
+
+            for (const auto& join : joins) {
+                size_t table1 = join.first;
+                size_t table2 = join.second;
+
+                if (joined[table1] && !joined[table2]) {
+                    double cost = estimateJoinCost(tableSizes[table1], tableSizes[table2]);
+                    if (cost < bestCost) {
+                        bestCost = cost;
+                        bestTable = table2;
+                    }
+                } else if (joined[table2] && !joined[table1]) {
+                    double cost = estimateJoinCost(tableSizes[table2], tableSizes[table1]);
+                    if (cost < bestCost) {
+                        bestCost = cost;
+                        bestTable = table1;
+                    }
+                }
+            }
+
+            if (bestTable != size_t(-1)) {
+                joinOrder.push_back(bestTable);
+                joined[bestTable] = true;
+            } else {
+                // If no join found, add the smallest unjoinedtable
+                auto it = std::find(joined.begin(), joined.end(), false);
+                if (it != joined.end()) {
+                    size_t index = std::distance(joined.begin(), it);
+                    joinOrder.push_back(index);
+                    joined[index] = true;
+                }
+            }
+        }
+
+        return joinOrder;
+    }
+
+private:
+    double estimateJoinCost(size_t size1, size_t size2) {
+        // Simple cost model: larger tables are more expensive to join
+        return static_cast<double>(size1 * size2);
+    }
 };
 
 struct QueryComponents {
@@ -1194,6 +1291,79 @@ QueryComponents parseQuery(const std::string& query) {
 
     return components;
 }
+
+class MaterializedView {
+private:
+    std::string viewName;
+    std::string viewDefinition;
+    std::vector<std::unique_ptr<Tuple>> viewData;
+
+public:
+    MaterializedView(const std::string& name, const std::string& definition)
+        : viewName(name), viewDefinition(definition) {}
+
+    void refresh(BufferManager& bufferManager) {
+        // Parse the view definition and execute the query
+        auto components = parseQuery(viewDefinition);
+        
+        // Clear existing data
+        viewData.clear();
+
+        // Execute the query and store results
+        ScanOperator scanOp(bufferManager);
+        Operator* rootOp = &scanOp;
+
+        // Apply operations based on query components
+        // ... (similar to executeQuery function)
+
+        rootOp->open();
+        while (rootOp->next()) {
+            auto output = rootOp->getOutput();
+            auto tuple = std::make_unique<Tuple>();
+            for (auto& field : output) {
+                tuple->addField(std::move(field));
+            }
+            viewData.push_back(std::move(tuple));
+        }
+        rootOp->close();
+    }
+
+    const std::vector<std::unique_ptr<Tuple>>& getData() const {
+        return viewData;
+    }
+
+    const std::string& getName() const {
+        return viewName;
+    }
+};
+
+class MaterializedViewManager {
+private:
+    std::unordered_map<std::string, std::unique_ptr<MaterializedView>> views;
+    BufferManager& bufferManager;
+
+public:
+    MaterializedViewManager(BufferManager& bm) : bufferManager(bm) {}
+
+    void createView(const std::string& name, const std::string& definition) {
+        auto view = std::make_unique<MaterializedView>(name, definition);
+        view->refresh(bufferManager);
+        views[name] = std::move(view);
+    }
+
+    void refreshView(const std::string& name) {
+        auto it = views.find(name);
+        if (it != views.end()) {
+            it->second->refresh(bufferManager);
+        }
+    }
+
+    const MaterializedView* getView(const std::string& name) const {
+        auto it = views.find(name);
+        return (it != views.end()) ? it->second.get() : nullptr;
+    }
+};
+
 
 void prettyPrint(const QueryComponents& components) {
     std::cout << "Query Components:\n";
@@ -1330,6 +1500,11 @@ public:
     std::vector<std::unique_ptr<Field>> getOutput() override {
         return {}; // Return empty vector
     }
+
+    double estimateCost(CostModel& costModel) override {
+        // Placeholder logic
+        return 1.0;
+    }
 };
 
 class DeleteOperator : public Operator {
@@ -1365,20 +1540,28 @@ public:
     std::vector<std::unique_ptr<Field>> getOutput() override {
         return {}; // Return empty vector
     }
-};
 
+    double estimateCost(CostModel& costModel) override {
+        // Placeholder logic
+        return 1.0;
+    }
+};
 
 class BuzzDB {
 public:
     HashIndex hash_index;
     BufferManager buffer_manager;
+    CostModel cost_model;
+    JoinOrderOptimizer join_optimizer;
+    MaterializedViewManager view_manager;
 
 public:
     size_t max_number_of_tuples = 5000;
     size_t tuple_insertion_attempt_counter = 0;
 
-    BuzzDB(){
-        // Storage Manager automatically created
+    BuzzDB() : view_manager(buffer_manager) {
+        // Initialize materialized views
+        view_manager.createView("sum_by_key", "SUM{2} GROUP BY {1}");
     }
 
     // insert function
@@ -1417,17 +1600,79 @@ public:
     }
 
     void executeQueries() {
-
         std::vector<std::string> test_queries = {
             "SUM{1} GROUP BY {1} WHERE {1} > 2 and {1} < 6"
         };
 
         for (const auto& query : test_queries) {
             auto components = parseQuery(query);
-            //prettyPrint(components);
-            executeQuery(components, buffer_manager);
+            
+            // Check if we can use a materialized view
+            const MaterializedView* view = view_manager.getView("sum_by_key");
+            if (view && canUseView(components, view)) {
+                std::cout << "Using materialized view for query." << std::endl;
+                // Use the view data instead of executing the query
+                for (const auto& tuple : view->getData()) {
+                    for (const auto& field : tuple->fields) {
+                        field->print();
+                        std::cout << " ";
+                    }
+                    std::cout << std::endl;
+                }
+            } else {
+                // Execute the query as before, but now with cost estimation
+                executeOptimizedQuery(components);
+            }
+        }
+    }
+
+private:
+    void executeOptimizedQuery(const QueryComponents& components) {
+        ScanOperator scanOp(buffer_manager);
+        Operator* rootOp = &scanOp;
+
+        std::vector<std::unique_ptr<Operator>> operators;
+
+        if (components.whereCondition) {
+            auto selectOp = std::make_unique<SelectOperator>(*rootOp, createPredicate(components));
+            rootOp = selectOp.get();
+            operators.push_back(std::move(selectOp));
         }
 
+        if (components.sumOperation || components.groupBy) {
+            auto aggOp = std::make_unique<HashAggregationOperator>(*rootOp, 
+                components.groupBy ? std::vector<size_t>{static_cast<size_t>(components.groupByAttributeIndex)} : std::vector<size_t>{},
+                std::vector<AggrFunc>{{AggrFuncType::SUM, static_cast<size_t>(components.sumAttributeIndex)}});
+            rootOp = aggOp.get();
+            operators.push_back(std::move(aggOp));
+        }
+
+        // Estimate cost of the plan
+        double planCost = rootOp->estimateCost(cost_model);
+        std::cout << "Estimated query cost: " << planCost << std::endl;
+
+        // Execute the plan
+        rootOp->open();
+        while (rootOp->next()) {
+            const auto& output = rootOp->getOutput();
+            for (const auto& field : output) {
+                field->print();
+                std::cout << " ";
+            }
+            std::cout << std::endl;
+        }
+        rootOp->close();
+    }
+
+    std::unique_ptr<IPredicate> createPredicate(const QueryComponents& components) {
+        // ... create predicate based on components ...
+    }
+
+    bool canUseView(const QueryComponents& components, const MaterializedView* view) {
+        // Check if the view can answer the query
+        // This is a simplified check and should be more comprehensive in a real system
+        return components.sumOperation && components.groupBy && 
+               components.groupByAttributeIndex == 0 && components.sumAttributeIndex == 1;
     }
     
 };
