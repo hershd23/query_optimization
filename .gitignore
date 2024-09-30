@@ -32,4 +32,4 @@
 *.app
 
 */output.txt
-*/.vscode/
+.vscode/
