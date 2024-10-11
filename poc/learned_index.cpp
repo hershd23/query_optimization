@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <string>
 
 void LinearRegression::fit(const std::vector<double>& X, const std::vector<double>& y) {
     double n = X.size();
@@ -28,6 +29,32 @@ LearnedIndex::LearnedIndex(const std::vector<int>& input_data) : data(input_data
     model.fit(X, y);
 }
 
+// Linear search
+int LearnedIndex::linear_search(int key, int pos) const {
+    int limit = 10;
+    int left_limit = 0;
+    int right_limit = 0;
+    if(data[pos] == key) {
+        return pos;
+    }
+    while(data[pos] > key && pos >= 0 && left_limit < limit) {
+        ++operations;
+        --pos;
+        ++left_limit;
+    }
+    while(data[pos] < key && pos < data.size() && right_limit < limit) {
+        ++operations;
+        ++pos;
+        ++right_limit;
+    }
+
+    if (pos < data.size() && pos >= 0 && data[pos] == key) {
+        return pos;
+    }
+
+    return -1;
+}
+
 int LearnedIndex::binary_search(int key, int left, int right) const {
     while (left <= right) {
         ++operations;
@@ -47,11 +74,28 @@ int LearnedIndex::binary_search(int key, int left, int right) const {
     return -1;
 }
 
-int LearnedIndex::search(int key) const {
+
+    /**
+     * @brief Search for a key in the learned index using the specified search type.
+     * 
+     * The search first predicts the position of the key using the linear model,
+     * then performs a binary search within a range of elements around the
+     * predicted position. The search range is set to the square root of the
+     * size of the data.
+     * 
+     * @param key The key to search for.
+     * @param type The type of search to perform. Currently, only "linear" is supported.
+     * @return The index of the element if found, -1 otherwise.
+     */
+int LearnedIndex::search(int key, std::string type) const {
     operations = 0;
     double predicted_pos = model.predict(key);
     int pos = std::round(predicted_pos);
     pos = std::max(0, std::min(pos, static_cast<int>(data.size()) - 1));
+
+    if (type == "linear") {
+        return linear_search(key, pos);
+    }
 
     // Define a search range around the predicted position
     int search_range = std::max(1, static_cast<int>(std::sqrt(data.size()))); // You can adjust this

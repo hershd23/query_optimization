@@ -2,6 +2,7 @@
 #define LEARNED_INDEX_H
 
 #include <vector>
+#include <string>
 
 class LinearRegression {
 private:
@@ -18,12 +19,13 @@ private:
     std::vector<int> data;
     LinearRegression model;
     int binary_search(int key, int left, int right) const;
+    int linear_search(int key, int pos) const;
 
 public:
     mutable int operations;
 
     LearnedIndex(const std::vector<int>& input_data);
-    int search(int key) const;
+    int search(int key, std::string type = "binary") const;
 };
 
 #endif // LEARNED_INDEX_H

@@ -32,10 +32,15 @@ int main() {
 
     // Learned Index Search
     int learned_total_ops = 0;
+    int learned_search_not_found = 0;
     auto learned_start = std::chrono::high_resolution_clock::now();
 
     for (int key : search_keys) {
-        learned_index.search(key);
+        int pos = learned_index.search(key, "binary");
+        if(pos == -1){
+            learned_search_not_found++;
+        }
+
         learned_total_ops += learned_index.operations;
     }
 
@@ -44,11 +49,15 @@ int main() {
 
     // Binary Search
     int binary_total_ops = 0;
+    int bin_search_not_found = 0;
     auto binary_start = std::chrono::high_resolution_clock::now();
 
     for (int key : search_keys) {
         int ops;
-        binary_search(data, key, ops);
+        int pos = binary_search(data, key, ops);
+        if(pos == 1){
+            bin_search_not_found++;
+        }
         binary_total_ops += ops;
     }
 
@@ -60,17 +69,26 @@ int main() {
     std::cout << "Comparison of Learned Index vs Binary Search" << std::endl;
     std::cout << "Data size: " << DATA_SIZE << ", Searches performed: " << NUM_SEARCHES << std::endl;
     std::cout << std::endl;
+    std::cout << "Learned Index (Simple linear regression + linear search):" << std::endl;
+    std::cout << "  Total operations: " << learned_total_ops << std::endl;
+    std::cout << "  Avg operations per search: " << static_cast<double>(learned_total_ops) / NUM_SEARCHES << std::endl;
+    std::cout << "  Total time: " << learned_duration.count() << " ms" << std::endl;
+    std::cout << "  Avg time per search: " << learned_duration.count() / NUM_SEARCHES << " ms" << std::endl;
+    std::cout << "  Search not found: " << learned_search_not_found << std::endl;
+    std::cout << std::endl;
     std::cout << "Learned Index (Simple linear regression + binary search):" << std::endl;
     std::cout << "  Total operations: " << learned_total_ops << std::endl;
     std::cout << "  Avg operations per search: " << static_cast<double>(learned_total_ops) / NUM_SEARCHES << std::endl;
     std::cout << "  Total time: " << learned_duration.count() << " ms" << std::endl;
     std::cout << "  Avg time per search: " << learned_duration.count() / NUM_SEARCHES << " ms" << std::endl;
+    std::cout << "  Search not found: " << learned_search_not_found << std::endl;
     std::cout << std::endl;
     std::cout << "Binary Search:" << std::endl;
     std::cout << "  Total operations: " << binary_total_ops << std::endl;
     std::cout << "  Avg operations per search: " << static_cast<double>(binary_total_ops) / NUM_SEARCHES << std::endl;
     std::cout << "  Total time: " << binary_duration.count() << " ms" << std::endl;
     std::cout << "  Avg time per search: " << binary_duration.count() / NUM_SEARCHES << " ms" << std::endl;
+    std::cout << "  Search not found: " << bin_search_not_found << std::endl;
 
     return 0;
 }
