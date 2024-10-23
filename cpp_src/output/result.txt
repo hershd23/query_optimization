@@ -1,0 +1,171 @@
+Table: director_join_movie_director_join_movie_filtered_projected
+fname               lname               year                
+------------------------------------------------------------
+Farhan              Akhtar              2011                
+Carlos              Bolado              2011                
+Paul                Basile              2011                
+Joan                Carr-Wiggin         2011                
+Christian E.        Christiansen        2011                
+Jaume               Collet-Serra        2011                
+Jeff                Crispi              2012                
+Sven                Dagones             2011                
+Howard              Deutch              2011                
+Tom                 DiCillo             2011                
+Fabrice             Du Welz             2011                
+Dennis              Dugan               2011                
+Charles             Evans Jr.           2011                
+Chris               Eyre                2011                
+Heidi Maria         Faisst              2011                
+Vera                Farmiga             2011                
+Ron                 Fernandez           2011                
+Mark                Freiburger          2011                
+Julie               Gavras              2011                
+Nicholas            Gyeney              2011                
+James               Hunter              2011                
+Osamu               Katayama            2011                
+Richard             Keith               2011                
+Jonathan            Kesselman           2011                
+Ousa                Khun                2011                
+Samedy              Khun                2011                
+Anthony             Mandler             2012                
+Philippe            Martinez            2011                
+Amin                Matalqa             2012                
+Amin                Matalqa             2011                
+Tom                 Mattera             2013                
+David               Mazzoni             2013                
+Michael             Merino              2012                
+Michael             Merino              2011                
+Marcus              Nispel              2011                
+Phedon              Papamichael         2011                
+Christine           Parker              2011                
+Tristan             Patterson           2011                
+Brian               Robbins             2011                
+Paul                Schattel            2011                
+David               Schwimmer           2011                
+Ridley              Scott               2012                
+Krishna             Shah                2011                
+Domenic             Silipo              2011                
+Leigh               Simons              2011                
+Kevin               Smith               2011                
+Steven              Soderbergh          2011                
+Steven              Soderbergh          2011                
+Juan Diego          Solanas             2011                
+Barnaby             Southcombe          2011                
+Stuart              St. Paul            2011                
+Dan                 St. Pierre          2011                
+Spiros              Stathoulopoulos     2011                
+Robert              Stock               2011                
+Paul                Wiffen              2011                
+Ryan R.             Williams            2011                
+Solomon             Tubbs-Foster        2011                
+Geraint             Wyn Davies          2011                
+Alex                Zamm                2011                
+
+Table: director_join_movie_director_join_movie_filtered_projected
+fname               lname               name                year                
+--------------------------------------------------------------------------------
+Farhan              Akhtar              Don 2               2011                
+Carlos              Bolado              Solitary Birds      2011                
+Paul                Basile              Living the American Nightmare2011                
+Joan                Carr-Wiggin         If I Were You       2011                
+Christian E.        Christiansen        The Roommate        2011                
+Jaume               Collet-Serra        Unknown White Male  2011                
+Jeff                Crispi              Full Scale: The Divine Proportion2012                
+Sven                Dagones             Whirrrr             2011                
+Howard              Deutch              Spy vs. Stu         2011                
+Tom                 DiCillo             Lost in Blue        2011                
+Fabrice             Du Welz             For Your Entertainment2011                
+Dennis              Dugan               Just Go with It     2011                
+Charles             Evans Jr.           Addiction, Inc.     2011                
+Chris               Eyre                A Year in Mooring   2011                
+Heidi Maria         Faisst              Den der hvisker     2011                
+Vera                Farmiga             Higher Ground       2011                
+Ron                 Fernandez           Amsterdam           2011                
+Mark                Freiburger          Jimmy               2011                
+Julie               Gavras              Late Bloomers       2011                
+Nicholas            Gyeney              The Riot            2011                
+James               Hunter              One of Us           2011                
+Osamu               Katayama            Gaku: Minna no Yama 2011                
+Richard             Keith               Fall                2011                
+Jonathan            Kesselman           Abe Gilman's Ending 2011                
+Ousa                Khun                Kungfused           2011                
+Samedy              Khun                Kungfused           2011                
+Anthony             Mandler             Vlad                2012                
+Philippe            Martinez            The Last City       2011                
+Amin                Matalqa             Yasmeen             2012                
+Amin                Matalqa             Welcome to Nowhere  2011                
+Tom                 Mattera             Mectl               2013                
+David               Mazzoni             Mectl               2013                
+Michael             Merino              The Razorman        2012                
+Michael             Merino              The Haunting of Pearson Place2011                
+Marcus              Nispel              Conan               2011                
+Phedon              Papamichael         Whirrrr             2011                
+Christine           Parker              A Few Brains More   2011                
+Tristan             Patterson           Electric Slide      2011                
+Brian               Robbins             A Thousand Words    2011                
+Paul                Schattel            The Mourning Portrait2011                
+David               Schwimmer           Trust               2011                
+Ridley              Scott               The Kind One        2012                
+Krishna             Shah                Mother: The Indira Gandhi Story2011                
+Domenic             Silipo              Paulie at Odds      2011                
+Leigh               Simons              Love Evolution      2011                
+Kevin               Smith               Hit Somebody        2011                
+Steven              Soderbergh          Knockout            2011                
+Steven              Soderbergh          Untitled Liberace Project2011                
+Juan Diego          Solanas             Upside Down         2011                
+Barnaby             Southcombe          I, Anna             2011                
+Stuart              St. Paul            Red Snow            2011                
+Dan                 St. Pierre          Dorothy of OZ       2011                
+Spiros              Stathoulopoulos     Love and Let Die    2011                
+Robert              Stock               Blood Cauldron      2011                
+Paul                Wiffen              Carmilla            2011                
+Ryan R.             Williams            Nowhere Fast        2011                
+Solomon             Tubbs-Foster        The Intertwined     2011                
+Geraint             Wyn Davies          Level Seven         2011                
+Alex                Zamm                Marvin the Martian  2011                
+
+Table: director_join_movie_director_join_movie_filtered_projected
+fname               lname               name                
+------------------------------------------------------------
+John                Bailey              Benevolence         
+
+Table: movie_filtered_join_movie_director_join_director_projected
+fname               lname               name                
+------------------------------------------------------------
+Benevolence         Lee                 Peterkin            
+
+Table: movie_filtered_join_movie_director_join_director_projected
+fname               lname               name                
+------------------------------------------------------------
+Benevolence         Lee                 Peterkin            
+
+Table: director_join_movie_director_join_movie_filtered_projected
+fname               lname               name                
+------------------------------------------------------------
+John                Bailey              Benevolence         
+
+Table: movie_filtered_join_movie_director_join_director_projected
+fname               lname               name                
+------------------------------------------------------------
+Benevolence         Lee                 Peterkin            
+
+Table: movie_filtered_join_movie_director_join_director_projected
+fname               lname               name                
+------------------------------------------------------------
+Benevolence         Lee                 Peterkin            
+
+Table: movie_join_movie_director_filtered_join_director_projected
+fname               lname               name                
+------------------------------------------------------------
+Benevolence         Lee                 Peterkin            
+
+Table: movie_join_movie_director_filtered_join_director_projected
+fname               lname               name                
+------------------------------------------------------------
+Benevolence         Lee                 Peterkin            
+
+Table: movie_join_movie_director_join_director_filtered_projected
+fname               lname               name                
+------------------------------------------------------------
+Benevolence         Lee                 Peterkin            
+

@@ -1,5 +1,3 @@
-# Makefile
-
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic
 LDFLAGS = -shared -fPIC
@@ -10,7 +8,7 @@ libdataloader.so: dataloader.cpp schema.h
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
 
 libparser.so: parser.cpp schema.h
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< -L. -ldataloader
 
 main: main.cpp schema.h
 	$(CXX) $(CXXFLAGS) -o $@ $< -L. -ldataloader -lparser -Wl,-rpath,.
@@ -19,7 +17,7 @@ clean:
 	rm -f libdataloader.so libparser.so main
 
 run: all
-	./main
+	LD_LIBRARY_PATH=. ./main
 
 debug: CXXFLAGS += -g
 debug: clean all
