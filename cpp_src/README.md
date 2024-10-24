@@ -14,6 +14,8 @@ make
 
 This will read the data from the schema and the datafiles and will initialize the tables for you as well as column level histograms for selectivity estimation
 
+Head down to the [Query Example](https://github.com/hershd23/query_optimization/tree/main/cpp_src#query-example) section to check for a sample query to test the application
+
 
 ## Components
 
