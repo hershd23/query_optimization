@@ -1,6 +1,6 @@
 # BUZZ DB QUERY OPTIMIZER
 
-**Author: Hersh Dhillon**
+**Author: Hersh Dhillon MSCS@Georgia Tech**
 
 ## Instructions to run the code
 
