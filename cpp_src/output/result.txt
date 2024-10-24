@@ -169,3 +169,8 @@ fname               lname               name
 ------------------------------------------------------------
 Benevolence         Lee                 Peterkin            
 
+Table: movie_filtered_join_movie_director_join_director_projected
+fname               lname               name                
+------------------------------------------------------------
+Benevolence         Lee                 Peterkin            
+
