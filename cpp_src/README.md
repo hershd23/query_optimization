@@ -1,5 +1,7 @@
 # BUZZ DB QUERY OPTIMIZER
 
+**Author: Hersh Dhillon**
+
 ## Instructions to run the code
 
 1. Download the data directory and store in this directory (titled 0.1)
