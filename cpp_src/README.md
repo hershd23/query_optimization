@@ -15,7 +15,7 @@ make
 This will read the data from the schema and the datafiles and will initialize the tables for you as well as column level histograms for selectivity estimation.
 
 This handles queries in memory based on the logic of the [Join Order Benchmark](https://github.com/gregrahn/join-order-benchmark), [paper](http://www.vldb.org/pvldb/vol9/p204-leis.pdf). 
-The authors argue that for modern systems and workloads, RAM is perfectly capable of handling large queries which is why we have not constructed a buffer manager to handle disk writes.
+The authors argue that for modern systems and workloads, RAM is perfectly capable of handling large queries which is why we have not constructed a buffer manager to handle disk reads and writes.
 
 Head down to the [Query Example](https://github.com/hershd23/query_optimization/tree/main/cpp_src#query-example) section to check for a sample query to test the application.
 
