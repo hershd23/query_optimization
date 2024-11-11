@@ -1,135 +1,31 @@
-# BUZZ DB QUERY OPTIMIZER
+# Query Optimization Workbench
 
-**Author: Hersh Dhillon MSCS@Georgia Tech**
+A query optimization workbench that implements various join ordering strategies and cost-based optimization for database queries.
 
-## Instructions to run the code
+## Overview
 
-1. Download the data directory and store in this directory (titled 0.1)
-[Link](https://gtvault-my.sharepoint.com/:f:/g/personal/hdhillon30_gatech_edu/EqgjMTCCexZPnRpI3iB65mIB0nviyqCxdqRmkBIHlfHArA?e=J3imIi)
+This workbench provides different query planning strategies:
+- Joins First: Executes all joins before filters
+- Filters First: Executes all filters before joins
+- Try All Join Orders: Exhaustively tries all possible join orders (with filters first)
+- Greedy Join Order: Uses a greedy approach to select join orders
+- Dynamic Programming: Uses DP to build optimal plans from smaller subplans
 
-2. Simply do
+## Query Format
 
+Queries are written in a simple, structured format:
 ```
-make
-./main
-```
-
-This will read the data from the schema and the datafiles and will initialize the tables for you as well as column level histograms for selectivity estimation.
-
-This handles queries in memory based on the logic of the [Join Order Benchmark](https://github.com/gregrahn/join-order-benchmark), [paper](http://www.vldb.org/pvldb/vol9/p204-leis.pdf). 
-The authors argue that for modern systems and workloads, RAM is perfectly capable of handling large queries which is why we have not constructed a buffer manager to handle disk reads and writes.
-
-Head down to the [Query Example](https://github.com/hershd23/query_optimization/tree/main/cpp_src#query-example) section to check for a sample query to test the application.
-
-
-## Components
-
-## Storage of Tables and Schema in `schema.h`
-
-This header file, `schema.h`, defines the classes used to represent tables and a schema in a database system.
-
-## Tables
-* Each table is represented by the `Table` class.
-* A `Table` object contains:
-  * `name`: The name of the table (e.g., "customers").
-  * `columns`: A vector of `Column` objects defining the table's schema.
-  * `data`: A 2D vector of `Field` objects representing the actual data rows.
-
-## Schema
-* The `Schema` class acts as a container for multiple tables.
-* It uses an unordered map called `tables` to store key-value pairs:
-  * **Key**: Table name (string)
-  * **Value**: Shared pointer to a `Table` object
-
-## Key Points
-* The schema uses shared pointers for tables to manage memory efficiently.
-* Tables store data in a 2D vector, where each inner vector represents a row, and each element is a `Field` object.
-* `Field` objects can hold either integer or string data using `variant`.
-
-## Selectivity Estimation
-
-The `Table` class provides the method `estimateSelectivity` to estimate the selectivity of a predicate on a specific column.
-
-### Process:
-1. **Column Lookup**: Finds the corresponding `Column` object based on the column name.
-2. **Histogram Lookup**: Uses the appropriate histogram (`intHistogram` or `stringHistogram`) based on the column type.
-3. **Histogram Operations**: Analyzes the histogram data to estimate selectivity based on the predicate operation and value.
-4. **Result**: Returns a double value between 0 and 1 representing the estimated proportion of rows satisfying the predicate.
-
-## Parsing
-
-The parser supports a limited SQL grammar and converts SQL-like queries into an Abstract Syntax Tree (AST). The AST consists of nodes that represent different clauses, such as `SELECT`, `FROM`, and `WHERE`. The following are the key components of the grammar:
-
-* **SELECT Clause:** The `SelectNode` class is responsible for parsing the `SELECT` clause. It supports both table-qualified columns (e.g., `table.column`) and unqualified columns (e.g., `column`). Parsed columns are stored in a vector of `Column` structures. The `print()` method outputs the parsed columns for debugging.
-
-* **FROM Clause:** The `FromNode` class parses the `FROM` clause, handling tables and their optional aliases. Tables and aliases are stored in a vector of `TableRef` structures. The `print()` method outputs the parsed tables and aliases.
-
-* **Conditions (WHERE and JOIN):** Conditions are handled by the `Condition` class, supporting comparison operators (e.g., `=`, `>`, `<`) between columns, integers, or strings. The `isJoinCondition` flag distinguishes between filter and join conditions. Conditions are printed for debugging using the `print()` method.
-
-* **WHERE Clause:** The `WhereNode` class parses the `WHERE` clause. It stores conditions in a vector of `Condition` objects, allowing filtering of rows based on column comparisons or constant values.
-
-* **JOIN Clause:** The `JoinNode` class handles the parsing of `JOIN` clauses, supporting joins between tables with conditions. Table aliases are also managed within the join.
-
-* **GROUP BY and HAVING Clauses:** The `GroupByNode` class parses the `GROUP BY` clause, storing the columns by which results are grouped. The `HavingNode` class handles the `HAVING` clause, applying conditions to the groups of results.
-
-* **SQLParser Class:** The `SQLParser` class is the main interface for parsing queries. It processes the query string, skips whitespace, manages table aliases, and constructs the AST using various node classes.
-
-## Execution
-
-The executor is responsible for interpreting and executing the AST generated by the parser. It performs operations such as column selection, row filtering, and table joining based on the parsed query. The following details the key components of query execution:
-
-* **Executing the SELECT Clause:** The executor processes the columns specified by the `SelectNode`. It validates each column against the schema and retrieves the relevant data for output. If the columns are table-qualified, the executor ensures proper reference to the table.
-
-* **Executing the FROM Clause:** The executor loads the tables specified in the `FROM` clause into memory. Aliases are applied as needed, and in cases of multiple tables, the executor handles joins accordingly.
-
-* **Handling Conditions (WHERE and JOIN):** Conditions specified in the `WhereNode` are evaluated, and the executor filters rows based on these conditions. Join conditions, as specified in the `JoinNode`, are used to combine rows from different tables.
-
-* **Only support for Left deep and right deep trees:** As the code exists right now, it only support left deep/right deep trees for query execution. Bushy tree support will be provided in the future
-
-* **Debugging and Output:** Throughout execution, the system uses the `print()` methods in each AST node to output the parsed query structure, providing debugging information for the query execution process.
-
-* **Aggregation is not executable as of yet:** While aggregation will get parsed at this step, it will not get executed
-
-## Query Example
-
-```sql
-SELECT director.fname, director.lname, movie.name 
-FROM movie, movie_director, director 
-WHERE movie.id=8854 AND movie.id=movie_director.mid 
-AND movie_director.did=director.id;
+query_start
+tables: table1, table2, ...
+scalar_filters: table.column=value, ...
+dynamic_filters: table1.column=table2.column, ...
+joins: table1.column=table2.column, ...
+query_end
 ```
 
-Multiple plans are generated from this query, we keep a track of the times and mention them in the results:
+## Example Queries
 
-| Plan | Planning Time (µs) | Execution Time (µs) |
-|------|-------------------|-------------------|
-| **Filtering After Joining** | 45 | 59,914,378 |
-| **Filtering in the Middle** | 88 | 32,566,594 |
-| **Filtering Before Joining** | 50 | 7,275 |
-
-We can see that in general filtering before joining gives much better performance, which is known. Hence we take filtering before joining as a general rule before proceeding to joins.
-
-Now we perform join ordering:
-
-| Plan | Planning Time (µs) | Execution Time (µs) |
-|------|-------------------|-------------------|
-| **director-movie_director-movie** | 39 | 26820421 |
-| **movie-movie_director-director** | 50 | 7,275 |
-
-Since the filtering happens on the movie table, it makes sense to take the movie table first and then move forward, since movie_director to director joins both tables fully without any filtering.
-
-## Future Work on this (Rest of the semester)
-
-- [ ] Add more feature support
-- [ ] Add implementations for Hashjoin with a cost model
-- [ ] Incrementally increase grammar for the parser
-- [ ] Make aggregation executable
-- [ ] Improve the UX of the application
-- [ ] Incorporate multiple cost models
-- [ ] Incorporate bushy trees
-
-
-## Queries
+1. Find director for a specific movie:
 ```
 query_start
 tables: movie, director, movie_director
@@ -138,6 +34,7 @@ joins: movie_director.did=director.id, movie.id=movie_director.mid
 query_end
 ```
 
+2. Find all male actors who acted in movies directed by Spielberg after 2000:
 ```
 query_start
 tables: movie, director, movie_director, actor, casts
@@ -146,10 +43,53 @@ joins: movie.id=movie_director.mid, movie_director.did=director.id, movie.id=cas
 query_end
 ```
 
+3. Find all movies directed by Nolan in the Drama genre:
 ```
 query_start
-tables: movie, director, movie_director, actor, casts, genre
+tables: movie, director, movie_director, genre
 scalar_filters: director.lname=Nolan, genre.genre=Drama
-joins: movie.id=movie_director.mid, movie_director.did=director.id, movie.id=casts.mid, casts.pid=actor.id, movie.id=genre.mid
+joins: movie.id=movie_director.mid, movie_director.did=director.id, movie.id=genre.mid
 query_end
+```
+
+## Cost-Based Optimization
+
+The workbench uses several metrics for cost estimation:
+- Table sizes and selectivity factors from histograms
+- I/O costs for scanning tables
+- CPU costs for comparisons
+- Join output size estimation
+
+For joins, the output size is estimated as:
+
+output_size = min(left_table_size, right_table_size)
+text
+
+## Plan Generation
+
+Each planning strategy generates:
+- Detailed cost estimates for each operation
+- Selectivity factors
+- Output sizes after each operation
+- Total plan cost
+- Plan generation time
+
+The planner then selects the best plan based on the estimated total cost.
+
+## Schema
+
+The workbench uses the IMDB dataset schema:
+```sql
+actor(id int, fname string, lname string, gender string)
+movie(id int, name string, year int)
+director(id int, fname string, lname string)
+casts(pid int, mid int, role string)
+movie_director(did int, mid int)
+genre(mid int, genre string)
+```
+
+## Building and Running
+```
+make
+./main
 ```
