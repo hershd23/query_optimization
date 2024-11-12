@@ -1,0 +1,6 @@
+Query Result
+============
+Total Rows: 0
+
+movie.id            movie.name          movie.year          movie_director.did  movie_director.mid  director.id         director.fname      director.lname      genre.mid           genre.genre         
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -2,6 +2,7 @@
 #include "schema.h"
 #include "parser.h"
 #include "planner.h"
+#include "executor.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -26,6 +27,8 @@ void processQuery(const std::vector<std::string>& queryLines, Schema* schema) {
         if (bestPlan) {
             std::cout << "\nBest Plan Selected:\n";
             bestPlan->printPlan();
+            Executor executor(schema);
+            executor.executeQuery(bestPlan->getExecutionOrder());
         }
         
     } catch (const std::exception& e) {

@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic
 LDFLAGS = -shared -fPIC
 
-HEADERS = schema.h parser.h planner.h
+HEADERS = schema.h parser.h planner.h executor.h
 
 all: libdataloader.so libparser.so main
 

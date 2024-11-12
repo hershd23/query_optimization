@@ -137,6 +137,18 @@ public:
             return std::get<std::string>(value) >= std::get<std::string>(other.value);
         }
     }
+
+    bool operator!=(const Field& other) const {
+        if (type != other.type) {
+            throw std::runtime_error("Cannot compare fields of different types");
+        }
+        
+        if (type == FieldType::INTEGER) {
+            return std::get<int>(value) != std::get<int>(other.value);
+        } else {
+            return std::get<std::string>(value) != std::get<std::string>(other.value);
+        }
+    }
 };
 
 class Predicate {
@@ -319,7 +331,7 @@ public:
     Table(const std::string& name) : name(name) {}
 
     void addColumn(const std::string& name, const std::string& tableName, const FieldType type) {
-        std::cout<<"Adding "<<name<<" and name "<<tableName<<std::endl;
+        //std::cout<<"Adding "<<name<<" and name "<<tableName<<std::endl;
         columns.emplace_back(name, tableName, type);
     }
 
@@ -348,12 +360,12 @@ public:
 
     int getColumnIndex(const std::string& columnName, const std::string& tableName) const {
         for (size_t i = 0; i < columns.size(); ++i) {
-            std::cout<<"Column name: "<<columns[i].name<<" Column table: "<<columns[i].baseTableName <<"Searching for tableName: "<<tableName<<" Column name:"<<std::endl;
+            //std::cout<<"Column name: "<<columns[i].name<<" Column table: "<<columns[i].baseTableName <<"Searching for tableName: "<<tableName<<" Column name:"<<std::endl;
             if (columns[i].name == columnName && columns[i].baseTableName == tableName) {
                 return i;
             }
         }
-        throw std::runtime_error("Column not found: " + columnName);
+        throw std::runtime_error("Column not found (getColumnIndex): " + columnName);
     }
 
     FieldType getColumnType(const std::string& columnName) const {
@@ -428,7 +440,7 @@ public:
                 // Recreate the histogram with the new min and max values
                 column.intHistogram = std::make_unique<IntHistogram>(2000, minVal, maxVal);
 
-                std::cout<<"New min and max values for column: "<<column.name<<" are: " <<minVal<<" "<<maxVal<<std::endl;
+                //std::cout<<"New min and max values for column: "<<column.name<<" are: " <<minVal<<" "<<maxVal<<std::endl;
 
                 // Populate the histogram with data from the column
                 for (const auto& row : data) {

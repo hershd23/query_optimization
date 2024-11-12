@@ -396,7 +396,7 @@ public:
                 bestSizes = currentSizes;
                 joinComponentExecutionOrder.clear();
                 for (const auto& join : joinOrder) {
-                    componentExecutionOrder.push_back(join);
+                    joinComponentExecutionOrder.push_back(join);
                 }
             }
         }
