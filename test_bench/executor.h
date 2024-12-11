@@ -11,7 +11,8 @@ private:
     Schema* schema;
     std::unordered_map<std::string, std::shared_ptr<Table>> tableMap;
 
-    std::shared_ptr<Table> applyFilter(std::shared_ptr<Table> table, 
+    std::shared_ptr<Table> applyFilter(std::shared_ptr<Table> table,
+                                     const std::string& baseTableName, 
                                      const std::string& column,
                                      Predicate::Op op, 
                                      const Field& value) {
@@ -24,7 +25,7 @@ private:
 
         // Apply filter condition
         for (const auto& row : table->data) {
-            int colIndex = table->getColumnIndex(column, table->name);
+            int colIndex = table->getColumnIndex(column, baseTableName);
             if (colIndex == -1) {
                 throw std::runtime_error("Column not found (Filter): " + column);
             }
@@ -144,7 +145,7 @@ public:
                          << "." << filter->lhsColumn << "\n";
                 
                 auto& table = tableMap[filter->lhsTable];
-                table = applyFilter(table, filter->lhsColumn, 
+                table = applyFilter(table, filter->lhsTable, filter->lhsColumn, 
                                   filter->predicate, filter->rhsValue);
                 
                 std::cout << "Filtered table size: " << table->data.size() << " rows\n";

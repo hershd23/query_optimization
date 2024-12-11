@@ -21,15 +21,48 @@ void processQuery(const std::vector<std::string>& queryLines, Schema* schema) {
         
         // Print all plans and their costs
         planner.printAllPlans();
+
+        std::cout << "\n=== Executing All Plans ===\n";
         
-        // Get the best plan
-        Plan* bestPlan = planner.getBestPlan();
-        if (bestPlan) {
-            std::cout << "\nBest Plan Selected:\n";
-            bestPlan->printPlan();
+        // Get and execute all plans
+        auto allPlans = planner.getAllPlans();
+        std::vector<std::pair<std::string, double>> executionTimes;
+        
+        for (auto plan : allPlans) {
+            std::string planType = planner.getPlanType(plan);
+            std::cout << "\nExecuting " << planType << " Plan:\n";
+            
             Executor executor(schema);
-            executor.executeQuery(bestPlan->getExecutionOrder());
+            
+            // Time the execution
+            auto startTime = std::chrono::high_resolution_clock::now();
+            executor.executeQuery(plan->getExecutionOrder());
+            auto endTime = std::chrono::high_resolution_clock::now();
+            
+            double executionTime = std::chrono::duration_cast<std::chrono::microseconds>(
+                endTime - startTime).count() / 1000.0;  // Convert to milliseconds
+            
+            executionTimes.push_back({planType, executionTime});
         }
+        
+        // Print execution time summary
+        std::cout << "\n=== Execution Time Summary ===\n";
+        for (const auto& [planType, time] : executionTimes) {
+            std::cout << planType << " Plan: " << time << " ms\n";
+        }
+        
+        // } catch (const std::exception& e) {
+        //     std::cerr << "Error processing query: " << e.what() << std::endl;
+        // }
+        
+        // // Get the best plan
+        // Plan* bestPlan = planner.getBestPlan();
+        // if (bestPlan) {
+        //     std::cout << "\nBest Plan Selected:\n";
+        //     bestPlan->printPlan();
+        //     Executor executor(schema);
+        //     executor.executeQuery(bestPlan->getExecutionOrder());
+        // }
         
     } catch (const std::exception& e) {
         std::cerr << "Error processing query: " << e.what() << std::endl;

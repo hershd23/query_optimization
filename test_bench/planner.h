@@ -777,12 +777,6 @@ public:
         plans.back()->generatePlan();
         endTime = getCurrentTimeMs();
         planGenerationTimes["FiltersFirst"] = endTime - startTime;
-
-        startTime = getCurrentTimeMs();
-        plans.push_back(std::make_unique<TryAllJoinOrderPlan>(schema, components));
-        plans.back()->generatePlan();
-        endTime = getCurrentTimeMs();
-        planGenerationTimes["TryAllJoinOrderPlan"] = endTime - startTime;
         
         // Create and time GreedyJoinPlan 
         startTime = getCurrentTimeMs();
@@ -796,6 +790,12 @@ public:
         plans.back()->generatePlan();
         endTime = getCurrentTimeMs();
         planGenerationTimes["DPJoinPlan"] = endTime - startTime;
+
+        startTime = getCurrentTimeMs();
+        plans.push_back(std::make_unique<TryAllJoinOrderPlan>(schema, components));
+        plans.back()->generatePlan();
+        endTime = getCurrentTimeMs();
+        planGenerationTimes["TryAllJoinOrderPlan"] = endTime - startTime;
     }
 
     void printAllPlans() const {
@@ -822,6 +822,33 @@ public:
             plan->printPlan();
         }
         std::cout << "===========================\n";
+    }
+
+    std::vector<Plan*> getAllPlans() {
+        std::vector<Plan*> allPlans;
+        for (const auto& plan : plans){
+            if (dynamic_cast<const JoinsFirstPlan*>(plan.get())){
+                // Skipping the JoinsFirstPlan
+                continue;
+            }
+            allPlans.push_back(plan.get());
+        }
+        return allPlans;
+    }
+
+    std::string getPlanType(const Plan* plan) {
+        if (dynamic_cast<const JoinsFirstPlan*>(plan)) {
+            return "JoinsFirst";
+        } else if (dynamic_cast<const FiltersFirstPlan*>(plan)) {
+            return "FiltersFirst";
+        } else if (dynamic_cast<const TryAllJoinOrderPlan*>(plan)) {
+            return "TryAllJoinOrder";
+        } else if (dynamic_cast<const GreedyJoinPlan*>(plan)) {
+            return "GreedyJoin";
+        } else if (dynamic_cast<const DPJoinPlan*>(plan)) {
+            return "DPJoin";
+        }
+        return "Unknown";
     }
 
     Plan* getBestPlan() {
